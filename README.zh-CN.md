@@ -4,6 +4,10 @@
 
 `Xfly` 是一个基于 LSPosed/Xposed 的 Android 模块，用于向指定应用伪装 WiFi 相关信息。
 
+## 下载
+
+- [Xfly_1.2-debug.apk](./release-assets/Xfly_1.2-debug.apk)
+
 ## 上游来源
 
 本项目基于以下上游仓库修改而来：
@@ -83,6 +87,15 @@ app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 3. 在 LSPosed 中启用模块。
 4. 在作用域中勾选目标应用。
 5. 重启目标应用。
+
+## 发布说明
+
+- [v1.2 版本说明](./RELEASE_v1.2.md)
+- [GitHub Release 可复制文案](./RELEASE_v1.2_GITHUB.md)
+
+## 更新日志
+
+- [CHANGELOG.md](./CHANGELOG.md)
 
 ## 许可状态
 

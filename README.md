@@ -4,6 +4,10 @@
 
 `Xfly` is an LSPosed/Xposed module for spoofing WiFi-related information returned to selected Android apps.
 
+## Download
+
+- [Xfly_1.2-debug.apk](./release-assets/Xfly_1.2-debug.apk)
+
 ## Upstream
 
 This project is based on:
@@ -83,6 +87,15 @@ app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 3. Enable the module in LSPosed.
 4. Select the target apps in LSPosed scope.
 5. Restart the target apps.
+
+## Release Notes
+
+- [v1.2 release summary](./RELEASE_v1.2.md)
+- [GitHub Release copy text](./RELEASE_v1.2_GITHUB.md)
+
+## Changelog
+
+- [CHANGELOG.md](./CHANGELOG.md)
 
 ## License Status
 
