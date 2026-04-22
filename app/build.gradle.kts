@@ -13,12 +13,12 @@ android {
         applicationId = "com.hook.fakewifi"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        setProperty("archivesBaseName", "V${versionName}_VersionCode-$versionCode")
+        setProperty("archivesBaseName", "Xfly_${versionName}")
     }
 
     buildTypes {

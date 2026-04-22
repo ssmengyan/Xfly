@@ -13,6 +13,7 @@ data class FakeWifiConfig(
     val bssid: String = "",
     val mac: String = "",
 ) {
+    fun shouldSpoofWifiState(): Boolean = hasCustomSsid() || hasCustomBssid() || hasCustomMac()
     fun hasCustomSsid(): Boolean = ssid.trim().isNotEmpty()
     fun hasCustomBssid(): Boolean = bssid.trim().isNotEmpty()
     fun hasCustomMac(): Boolean = mac.trim().isNotEmpty()
