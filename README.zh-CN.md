@@ -4,6 +4,14 @@
 
 `Xfly` 是一个基于 LSPosed/Xposed 的 Android 模块，用于向指定应用伪装 WiFi 相关信息。
 
+## 上游来源
+
+本项目基于以下上游仓库修改而来：
+
+- [JeffChen001218/Fake-Wifi](https://github.com/JeffChen001218/Fake-Wifi)
+
+当前仓库是在上游基础上继续扩展和修改的版本。
+
 ## 功能特性
 
 - 自定义 `SSID`
@@ -66,6 +74,12 @@ app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 3. 在 LSPosed 中启用模块。
 4. 在作用域中勾选目标应用。
 5. 重启目标应用。
+
+## 许可状态
+
+请先阅读 [LICENSE_STATUS.md](./LICENSE_STATUS.md)。
+
+截至当前检查时，上游仓库似乎**没有明确提供开源许可证文件**。因此，这个衍生仓库目前**没有**擅自声明新的宽松开源协议，以避免在上游授权未明确时造成许可问题。
 
 ## 注意事项
 

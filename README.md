@@ -4,6 +4,14 @@
 
 `Xfly` is an LSPosed/Xposed module for spoofing WiFi-related information returned to selected Android apps.
 
+## Upstream
+
+This project is based on:
+
+- [JeffChen001218/Fake-Wifi](https://github.com/JeffChen001218/Fake-Wifi)
+
+This repository contains local modifications and extended functionality on top of that upstream project.
+
 ## Features
 
 - Custom `SSID`
@@ -66,6 +74,12 @@ app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 3. Enable the module in LSPosed.
 4. Select the target apps in LSPosed scope.
 5. Restart the target apps.
+
+## License Status
+
+Please read [LICENSE_STATUS.md](./LICENSE_STATUS.md) before reusing or redistributing this repository.
+
+At the time of writing, the upstream repository does not appear to publish a clear open-source license file. Because of that, this fork does **not** currently declare a new permissive license on top of the upstream code.
 
 ## Notes
 
