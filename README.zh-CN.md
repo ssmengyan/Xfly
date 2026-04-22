@@ -67,6 +67,15 @@ Debug APK 输出采用 `Xfly_<版本号>-debug.apk` 命名格式。
 app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 ```
 
+## 配置需求
+
+- Android 7.0 及以上（`minSdk 24`）
+- 已安装 LSPosed 或兼容的 Xposed 环境
+- Xposed API 版本 `82` 及以上
+- 需要在 LSPosed 中启用模块
+- 需要在 LSPosed 作用域中勾选目标应用
+- 每次修改伪装配置后，建议重启目标应用
+
 ## 使用方法
 
 1. 安装 APK。

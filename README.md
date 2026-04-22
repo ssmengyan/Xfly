@@ -67,6 +67,15 @@ Current example:
 app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 ```
 
+## Requirements
+
+- Android 7.0+ (`minSdk 24`)
+- LSPosed / compatible Xposed environment
+- Xposed API level `82` or above
+- The module must be enabled in LSPosed
+- Target apps must be selected in LSPosed scope
+- Restart target apps after updating spoofed values
+
 ## Usage
 
 1. Install the APK.
