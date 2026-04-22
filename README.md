@@ -1,8 +1,8 @@
-# Network Helper
+# Xfly
 
 [中文说明](./README.zh-CN.md)
 
-An LSPosed/Xposed module for spoofing WiFi-related information returned to selected apps.
+`Xfly` is an LSPosed/Xposed module for spoofing WiFi-related information returned to selected Android apps.
 
 ## Features
 
@@ -12,17 +12,38 @@ An LSPosed/Xposed module for spoofing WiFi-related information returned to selec
 - Fake `WifiManager.getScanResults()`
 - Independent settings screen
 - Per-app enablement through LSPosed scope
+- Extra WiFi connectivity-state spoofing for apps that also verify whether the device is really on WiFi
 
-## How It Works
+## Hook Coverage
 
-This project hooks common WiFi APIs used by Android apps:
+Current versions spoof or patch these common WiFi / connectivity checks:
 
 - `WifiInfo.getSSID()`
 - `WifiInfo.getBSSID()`
 - `WifiInfo.getMacAddress()`
+- `WifiInfo.getSupplicantState()`
+- `WifiInfo.getNetworkId()`
+- `WifiManager.isWifiEnabled()`
+- `WifiManager.getWifiState()`
 - `WifiManager.getScanResults()`
+- `NetworkCapabilities.hasTransport(TRANSPORT_WIFI)`
+- `NetworkCapabilities.hasCapability(INTERNET / VALIDATED)`
+- `ConnectivityManager.getActiveNetworkInfo()`
+- `ConnectivityManager.getNetworkInfo(TYPE_WIFI)`
+- `ConnectivityManager.isActiveNetworkMetered()`
+- `NetworkInfo.getType()`
+- `NetworkInfo.getTypeName()`
+- `NetworkInfo.isConnected()`
+- `NetworkInfo.isAvailable()`
+- `NetworkInfo.isConnectedOrConnecting()`
+- `LinkProperties.getInterfaceName()`
+- `LinkProperties.getDnsServers()`
 
-The module app stores the configuration locally, and hooked target apps read the same configuration through a shared provider.
+## How It Works
+
+The module app stores the spoofed configuration locally.
+
+When a target app is loaded by LSPosed, the hooked process reads the same configuration through a shared provider and returns the spoofed values to the target app.
 
 ## Build
 
@@ -30,22 +51,24 @@ The module app stores the configuration locally, and hooked target apps read the
 gradlew.bat assembleDebug
 ```
 
-Debug APK output:
+Debug APK output follows the `Xfly_<version>-debug.apk` naming format.
+
+Current example:
 
 ```text
-app/build/outputs/apk/debug/V1.0_VersionCode-1-debug.apk
+app/build/outputs/apk/debug/Xfly_1.2-debug.apk
 ```
 
 ## Usage
 
 1. Install the APK.
-2. Open `Network Helper` and fill in the WiFi values you want to spoof.
+2. Open `Xfly` and fill in the WiFi values you want to spoof.
 3. Enable the module in LSPosed.
 4. Select the target apps in LSPosed scope.
 5. Restart the target apps.
 
 ## Notes
 
-- Spoofing WiFi fields does not fully change the real network transport type.
-- Apps that also check `ConnectivityManager`, IP routing, DNS, or lower-level network state may still detect the real connection.
-- This module is most effective for apps that mainly rely on WiFi info APIs.
+- Spoofing WiFi fields is not the same as fully changing the real transport type used by Android.
+- This project now also spoofs several connectivity-state APIs, which helps with apps that perform a second-layer WiFi check.
+- Some apps may still use additional signals such as cellular state, routing details, VPN state, or proprietary risk controls.
