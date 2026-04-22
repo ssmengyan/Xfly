@@ -8,7 +8,7 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/ic_launcher"
-        android:label="Fake WIFI"
+        android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
@@ -17,8 +17,7 @@
         <activity
             android:name=".NavContainerActivity"
             android:exported="true"
-            android:label="Fake WIFI"
-            android:screenOrientation="portrait"
+            android:label="@string/app_name"
             android:theme="@style/Theme.Base">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,18 +25,20 @@
             </intent-filter>
         </activity>
 
+        <provider
+            android:name=".ConfigProvider"
+            android:authorities="${applicationId}.config"
+            android:exported="true" />
+
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="模拟wifi信息" />
+            android:value="Fake WiFi information for LSPosed" />
         <meta-data
             android:name="xposedminversion"
             android:value="82" />
-        <meta-data
-            android:name="xposedscope"
-            android:value="com.ss.android.lark" />
     </application>
 
 </manifest>

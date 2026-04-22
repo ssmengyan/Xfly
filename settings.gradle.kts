@@ -22,8 +22,8 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
 
-        // xposed repo
-        maven("https://maven.aliyun.com/repository/spring")
+        // Xposed API artifact repository
+        maven("https://api.xposed.info/")
     }
 }
 

@@ -1,41 +1,39 @@
 package hook
 
-import android.app.Application
 import android.content.Context
-import android.view.ViewGroup
+import android.net.Uri
+import android.net.wifi.ScanResult
+import android.net.wifi.WifiManager
+import android.os.SystemClock
+import com.hook.fakewifi.BuildConfig
+import com.hook.fakewifi.ConfigProvider
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import hook.tool.TopActivityProvider
-import hook.tool.getValue
-import hook.tool.injectUI
-import hook.ui.ShakeDetector
+import hook.tool.FakeWifiConfig
+import java.util.Collections
 
 class XposedStart : IXposedHookLoadPackage {
-    @Throws(Throwable::class)
+    companion object {
+        private const val DEFAULT_RSSI = -42
+        private const val DEFAULT_FREQUENCY = 5745
+        private const val DEFAULT_CAPABILITIES = "[WPA2-PSK-CCMP][ESS]"
+        private val hookedProcesses = Collections.synchronizedSet(mutableSetOf<String>())
+        private val providerUri: Uri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.config")
+        @Volatile
+        private var cachedContext: Context? = null
+    }
+
     override fun handleLoadPackage(loadPackageParam: LoadPackageParam) {
-//        if (loadPackageParam.packageName == "com.tencent.mm") {
-//        }
+        val processKey = "${loadPackageParam.packageName}:${loadPackageParam.processName}"
+        if (!hookedProcesses.add(processKey)) {
+            return
+        }
 
-        XposedBridge.log("hook started")
+        XposedBridge.log("Fake-Wifi: installing hooks for $processKey")
 
-        // 获取需要的class (如果所hook的函数参数需要)
-//         val wifiInfoCLz = XposedHelpers.findClass("android.net.wifi.WifiInfo", loadPackageParam.classLoader)
-
-        // Helper获取Context（可能取不到，跟时机有关系）
-//         val context = AndroidAppHelper.currentApplication()
-
-        // 可以获取Context，但是使用ContentProvider似乎会报错：Given calling package android does not match caller's uid
-//        val context = callMethod(
-//            callStaticMethod(
-//                findClass("android.app.ActivityThread", loadPackageParam.classLoader),
-//                "currentActivityThread"
-//            ), "getSystemContext"
-//        ) as Context
-
-        // hook获取Content
         XposedHelpers.findAndHookMethod(
             "android.content.ContextWrapper",
             loadPackageParam.classLoader,
@@ -43,84 +41,93 @@ class XposedStart : IXposedHookLoadPackage {
             Context::class.java,
             object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
-                    super.afterHookedMethod(param)
-                    val context = param.args[0] as Context
-                    XposedBridge.log(
-                        "context info => " +
-                                "\n\tpackageName: ${context.packageName}" +
-                                "\n\tapplicationContext: ${context.applicationContext}"
-                    )
-                    val application = context.applicationContext as? Application ?: run {
-                        XposedBridge.log("applicationContext is null. return")
-                        return
-                    }
-                    TopActivityProvider.init(application)
-                    if (context.applicationInfo.processName != context.packageName) {
-                        XposedBridge.log("not main process. return")
-                        return
-                    }
-                    ShakeDetector(context) {
-                        XposedBridge.log("shake detected")
-                        val activity = TopActivityProvider.get()
-                        if (activity == null) {
-                            XposedBridge.log("no activity found. return")
-                            return@ShakeDetector
-                        }
-                        activity.runOnUiThread {
-                            XposedBridge.log("==== start inject UI ====")
-                            injectUI(activity)
-                            XposedBridge.log("==== complete inject UI ====")
-                        }
-                    }.start()
-
-                    XposedHelpers.findAndHookMethod(
-                        "android.net.wifi.WifiInfo",
-                        loadPackageParam.classLoader,
-                        "getSSID",
-                        // 函数参数class（可能0~多个，这里没有就不传）
-                        object : XC_MethodHook() {
-                            @Throws(Throwable::class)
-                            override fun beforeHookedMethod(param: MethodHookParam) {
-                                super.beforeHookedMethod(param)
-                                // 读取参数
-                                // val arg0 = param.args[0]
-                            }
-
-                            @Throws(Throwable::class)
-                            override fun afterHookedMethod(param: MethodHookParam?) {
-                                super.afterHookedMethod(param)
-                                // modify return value
-                                param?.result = getValue("ssid", context)
-                            }
-                        })
-
-                    XposedHelpers.findAndHookMethod(
-                        "android.net.wifi.WifiInfo",
-                        loadPackageParam.classLoader,
-                        "getBSSID",
-                        object : XC_MethodHook() {
-                            @Throws(Throwable::class)
-                            override fun afterHookedMethod(param: MethodHookParam?) {
-                                super.afterHookedMethod(param)
-                                param?.result = getValue("bssid", context)
-                            }
-                        })
-
-                    XposedHelpers.findAndHookMethod(
-                        "android.net.wifi.WifiInfo",
-                        loadPackageParam.classLoader,
-                        "getMacAddress",
-                        object : XC_MethodHook() {
-                            @Throws(Throwable::class)
-                            override fun afterHookedMethod(param: MethodHookParam?) {
-                                super.afterHookedMethod(param)
-                                param?.result = getValue("mac", context)
-                            }
-                        })
-
+                    cachedContext = param.args[0] as? Context ?: cachedContext
                 }
-            });
+            }
+        )
+
+        hookWifiInfo(loadPackageParam)
+        hookScanResults(loadPackageParam)
+    }
+
+    private fun hookWifiInfo(loadPackageParam: LoadPackageParam) {
+        XposedHelpers.findAndHookMethod(
+            "android.net.wifi.WifiInfo",
+            loadPackageParam.classLoader,
+            "getSSID",
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam?) {
+                    val config = readConfig() ?: return
+                    if (config.hasCustomSsid()) {
+                        param?.result = config.wifiInfoSsid()
+                    }
+                }
+            }
+        )
+
+        XposedHelpers.findAndHookMethod(
+            "android.net.wifi.WifiInfo",
+            loadPackageParam.classLoader,
+            "getBSSID",
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam?) {
+                    val config = readConfig() ?: return
+                    if (config.hasCustomBssid()) {
+                        param?.result = config.normalizedBssid()
+                    }
+                }
+            }
+        )
+
+        XposedHelpers.findAndHookMethod(
+            "android.net.wifi.WifiInfo",
+            loadPackageParam.classLoader,
+            "getMacAddress",
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam?) {
+                    val config = readConfig() ?: return
+                    if (config.hasCustomMac()) {
+                        param?.result = config.normalizedMac()
+                    }
+                }
+            }
+        )
+    }
+
+    private fun hookScanResults(loadPackageParam: LoadPackageParam) {
+        XposedHelpers.findAndHookMethod(
+            WifiManager::class.java.name,
+            loadPackageParam.classLoader,
+            "getScanResults",
+            object : XC_MethodHook() {
+                override fun afterHookedMethod(param: MethodHookParam?) {
+                    val config = readConfig() ?: return
+                    if (config.hasCustomScanResult()) {
+                        param?.result = listOf(createFakeScanResult(config))
+                    }
+                }
+            }
+        )
+    }
+
+    private fun readConfig(): FakeWifiConfig? {
+        val context = cachedContext ?: return null
+        return runCatching {
+            val bundle = context.contentResolver.call(providerUri, ConfigProvider.METHOD_GET_CONFIG, null, null)
+            FakeWifiConfig.fromBundle(bundle)
+        }.onFailure {
+            XposedBridge.log("Fake-Wifi: failed to read config: ${it.message}")
+        }.getOrNull()
+    }
+
+    private fun createFakeScanResult(config: FakeWifiConfig): ScanResult {
+        val result = ScanResult::class.java.getDeclaredConstructor().newInstance()
+        result.SSID = config.scanResultSsid()
+        result.BSSID = config.normalizedBssid()
+        result.level = DEFAULT_RSSI
+        result.frequency = DEFAULT_FREQUENCY
+        result.capabilities = DEFAULT_CAPABILITIES
+        result.timestamp = SystemClock.elapsedRealtimeNanos()
+        return result
     }
 }
-
-

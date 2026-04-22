@@ -27,7 +27,7 @@ class ShakeDetector(
 
     fun stop() {
         runCatching {
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.unregisterListener(this)
         }
     }
 
