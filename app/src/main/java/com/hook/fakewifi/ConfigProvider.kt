@@ -5,9 +5,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
-import hook.tool.FakeWifiConfig
 import hook.tool.loadConfig
-import hook.tool.saveConfig
 
 class ConfigProvider : ContentProvider() {
     override fun onCreate(): Boolean = true
@@ -16,11 +14,6 @@ class ConfigProvider : ContentProvider() {
         val appContext = context?.applicationContext ?: return Bundle()
         return when (method) {
             METHOD_GET_CONFIG -> loadConfig(appContext).toBundle()
-            METHOD_PUT_CONFIG -> {
-                saveConfig(FakeWifiConfig.fromBundle(extras), appContext)
-                loadConfig(appContext).toBundle()
-            }
-
             else -> super.call(method, arg, extras)
         }
     }
@@ -48,6 +41,5 @@ class ConfigProvider : ContentProvider() {
 
     companion object {
         const val METHOD_GET_CONFIG = "get_config"
-        const val METHOD_PUT_CONFIG = "put_config"
     }
 }

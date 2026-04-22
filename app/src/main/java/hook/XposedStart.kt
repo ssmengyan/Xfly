@@ -22,6 +22,7 @@ class XposedStart : IXposedHookLoadPackage {
         private const val DEFAULT_CAPABILITIES = "[WPA2-PSK-CCMP][ESS]"
         private val hookedProcesses = Collections.synchronizedSet(mutableSetOf<String>())
         private val providerUri: Uri = Uri.parse("content://${BuildConfig.APPLICATION_ID}.config")
+
         @Volatile
         private var cachedContext: Context? = null
     }
@@ -103,7 +104,8 @@ class XposedStart : IXposedHookLoadPackage {
                 override fun afterHookedMethod(param: MethodHookParam?) {
                     val config = readConfig() ?: return
                     if (config.hasCustomScanResult()) {
-                        param?.result = listOf(createFakeScanResult(config))
+                        val originalResults = (param?.result as? List<*>)?.filterIsInstance<ScanResult>().orEmpty()
+                        param?.result = mergeFakeScanResult(originalResults, config)
                     }
                 }
             }
@@ -118,6 +120,36 @@ class XposedStart : IXposedHookLoadPackage {
         }.onFailure {
             XposedBridge.log("Fake-Wifi: failed to read config: ${it.message}")
         }.getOrNull()
+    }
+
+    private fun mergeFakeScanResult(
+        originalResults: List<ScanResult>,
+        config: FakeWifiConfig,
+    ): List<ScanResult> {
+        val targetBssid = config.normalizedBssid()
+        val targetSsid = config.scanResultSsid()
+        val mutable = originalResults.toMutableList()
+        val targetIndex = mutable.indexOfFirst { scanResult ->
+            scanResult.BSSID == targetBssid || scanResult.SSID == targetSsid
+        }
+
+        return if (targetIndex >= 0) {
+            mutable[targetIndex] = buildFakeScanResultFromBase(mutable[targetIndex], config)
+            mutable
+        } else {
+            listOf(createFakeScanResult(config)) + mutable
+        }
+    }
+
+    private fun buildFakeScanResultFromBase(base: ScanResult, config: FakeWifiConfig): ScanResult {
+        val result = ScanResult::class.java.getDeclaredConstructor().newInstance()
+        result.SSID = if (config.hasCustomSsid()) config.scanResultSsid() else base.SSID
+        result.BSSID = if (config.hasCustomBssid()) config.normalizedBssid() else base.BSSID
+        result.level = base.level
+        result.frequency = base.frequency
+        result.capabilities = base.capabilities
+        result.timestamp = base.timestamp
+        return result
     }
 
     private fun createFakeScanResult(config: FakeWifiConfig): ScanResult {

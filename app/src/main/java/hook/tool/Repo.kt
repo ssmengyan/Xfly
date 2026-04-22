@@ -20,6 +20,7 @@ data class FakeWifiConfig(
 
     fun normalizedBssid(): String = bssid.trim().ifBlank { "02:00:00:00:00:00" }
     fun normalizedMac(): String = mac.trim().ifBlank { "02:00:00:00:00:00" }
+
     fun wifiInfoSsid(): String {
         val raw = ssid.trim()
         if (raw.isEmpty()) return "\"FakeWifi\""
@@ -64,24 +65,3 @@ fun loadConfig(context: Context): FakeWifiConfig {
 }
 
 private fun prefs(context: Context) = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-
-fun saveValue(key: String, value: String, context: Context) {
-    val current = loadConfig(context)
-    val updated = when (key) {
-        KEY_SSID -> current.copy(ssid = value)
-        KEY_BSSID -> current.copy(bssid = value)
-        KEY_MAC -> current.copy(mac = value)
-        else -> current
-    }
-    saveConfig(updated, context)
-}
-
-fun getValue(key: String, context: Context): String {
-    val current = loadConfig(context)
-    return when (key) {
-        KEY_SSID -> current.ssid
-        KEY_BSSID -> current.bssid
-        KEY_MAC -> current.mac
-        else -> ""
-    }
-}
